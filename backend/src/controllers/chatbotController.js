@@ -8,7 +8,7 @@ const User = require('../models/User');
  */
 exports.chatWithRepository = async (req, res) => {
   try {
-    const { repoId, query, owner, repo, provider = 'gemini' } = req.body;
+    const { repoId, query, owner, repo, provider = 'groq' } = req.body;
     
     if (!req.user) {
       return res.status(401).json({ 
@@ -156,7 +156,7 @@ exports.createEmbeddings = async (req, res) => {
 exports.getRepositoryAnalysis = async (req, res) => {
   try {
     const { repoId } = req.params;
-    const { provider = 'gemini' } = req.query;
+    const { provider = 'groq' } = req.query;
     
     if (!req.user) {
       return res.status(401).json({ 

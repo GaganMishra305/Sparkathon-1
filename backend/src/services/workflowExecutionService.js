@@ -948,7 +948,7 @@ Response format:
 
 If NO security vulnerabilities are found, return empty security_vulnerabilities array. Distinguish between actual security risks and code quality/style issues.`;
       
-      const analysisResult = await analysisService.getQueryAboutCodeGemini(repoFiles, owaspQuery);
+      const analysisResult = await analysisService.getQueryAboutCode(repoFiles, owaspQuery);
       
       // Parse the analysis result
       let parsedAnalysis;

@@ -30,10 +30,16 @@ SECRET_KEY = 'django-insecure-cny$7l0ukv)8maz8ca@st%yg++dn5c*de2!7xvnftrl6v0+rm(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = "True"
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-]
+import os
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS')
+if allowed_hosts_env:
+    ALLOWED_HOSTS = allowed_hosts_env.split(',')
+else:
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        "django-backend"
+    ]
 
 # Application definition
 INSTALLED_APPS = [

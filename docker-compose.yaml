@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Database
   postgres:
@@ -39,13 +37,13 @@ services:
 
   # MongoDB for Node.js backend
   mongodb:
-    image: mongo:6-alpine
+    image: mongo:6
     environment:
       MONGO_INITDB_ROOT_USERNAME: vulnpilot
       MONGO_INITDB_ROOT_PASSWORD: vulnpilot_password
       MONGO_INITDB_DATABASE: vulnpilot
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - mongodb_data:/data/db
     healthcheck:
@@ -57,33 +55,26 @@ services:
     networks:
       - vulnpilot-network
 
-  # Django Backend (Security Scanning Service)
-  django-backend:
+
+  fastapi-backend:
     build: 
-      context: ./service
+      context: ./fastapi-backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ./service:/app
+      - ./fastapi-backend:/app
       - scan_results:/app/scans
       - logs_data:/app/logs
-    environment:
-      - DEBUG=True
-      - DATABASE_URL=postgresql://vulnpilot:vulnpilot_password@postgres:5432/vulnpilot
-      - REDIS_URL=redis://redis:6379/0
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,django-backend
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - chroma_cache:/root/.cache/chroma
+    env_file:
+      - ./backend/.env
     healthcheck:
-      test: ["CMD", "python3", "/app/health_check.py"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 30s
     restart: unless-stopped
     networks:
       - vulnpilot-network
@@ -104,16 +95,16 @@ services:
       - PORT=3000
       - MONGODB_URI=mongodb://vulnpilot:vulnpilot_password@mongodb:27017/vulnpilot?authSource=admin
       - REDIS_URL=redis://redis:6379/1
-      - DJANGO_API_URL=http://django-backend:8000
+      - DJANGO_API_URL=http://fastapi-backend:8000
     depends_on:
       mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
-      django-backend:
+      fastapi-backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -130,7 +121,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      django-backend:
+      fastapi-backend:
         condition: service_healthy
       node-backend:
         condition: service_healthy
@@ -158,6 +149,8 @@ volumes:
   node_logs:
     driver: local
   node_data:
+    driver: local
+  chroma_cache:
     driver: local
 
 networks:

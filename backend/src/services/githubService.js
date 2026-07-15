@@ -52,14 +52,19 @@ const getUserRepos = async (userId) => {
  * @param {string} accessToken - User's GitHub OAuth token
  * @returns {Promise<Array>} - List of files with content
  */
-const fetchRepoContents = async (owner, repo, path = "", userId) => {
+const fetchRepoContents = async (owner, repo, path = "", userId, state = { count: 0 }) => {
   try {
     const user = await User.findById(userId).select('+accessToken');
     
     if (!user || !user.accessToken) {
       throw new Error("User not authenticated or missing access token");
     }
-    
+
+    const IGNORED_DIRS = ['node_modules', '.git', 'dist', 'build', 'venv', '.venv', 'vendor', 'target', 'data', 'datasets'];
+    const ALLOWED_EXTS = ['.js', '.ts', '.py', '.java', '.go', '.rb', '.php', '.cs', '.cpp', '.c', '.jsx', '.tsx', '.vue', '.html', '.css', '.json', '.yaml', '.yml', '.toml', '.xml', '.ipynb'];
+    const MAX_FILE_SIZE = 100000; // 100KB limit
+    const MAX_FILES = 80;
+
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${user.accessToken}` },
@@ -69,32 +74,54 @@ const fetchRepoContents = async (owner, repo, path = "", userId) => {
     let files = [];
 
     for (const item of response.data) {
-      if (item.type === "file") {
-        const fileResponse = await axios.get(item.download_url, {
-          responseType: "arraybuffer",
-        });
-        const fileBuffer = Buffer.from(fileResponse.data);
+      if (state.count >= MAX_FILES) {
+        break;
+      }
 
-        // Detect if it's a binary file
-        const isBinary = fileBuffer.includes(0);
-        if (isBinary) {
-          console.log(`Binary file detected: ${item.path}`);
+      if (item.type === "file") {
+        const ext = '.' + item.name.split('.').pop().toLowerCase();
+        
+        // Skip non-code extensions or files larger than 100KB
+        if (!ALLOWED_EXTS.includes(ext) || item.size > MAX_FILE_SIZE) {
+          continue;
         }
 
-        // TODO: Modify backslash "\n" in response
-        files.push({
-          path: item.path,
-          content: isBinary
-            ? fileBuffer.toString("base64")
-            : fileBuffer.toString("utf-8"),
-          isBinary,
-        });
+        try {
+          const fileResponse = await axios.get(item.download_url, {
+            responseType: "arraybuffer",
+            timeout: 5000,
+          });
+          const fileBuffer = Buffer.from(fileResponse.data);
+
+          // Detect if it's a binary file
+          const isBinary = fileBuffer.includes(0);
+          if (isBinary) {
+            console.log(`Binary file detected: ${item.path}`);
+            continue; // Skip indexing binary files
+          }
+
+          files.push({
+            path: item.path,
+            content: fileBuffer.toString("utf-8"),
+            isBinary: false,
+          });
+          state.count++;
+        } catch (fileErr) {
+          console.error(`Skipped downloading file ${item.path}:`, fileErr.message);
+        }
+
       } else if (item.type === "dir") {
+        const dirName = item.name.toLowerCase();
+        if (IGNORED_DIRS.includes(dirName)) {
+          continue; // Skip scanning dependencies/build folders
+        }
+
         const subFiles = await fetchRepoContents(
           owner,
           repo,
           item.path,
-          userId
+          userId,
+          state
         );
         files = files.concat(subFiles);
       }
