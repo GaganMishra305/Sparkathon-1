@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Send, Bot, User, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import useAuth from '@/hooks/useAuth';
 
 interface Message {
   id: string;
@@ -35,7 +34,7 @@ export const EnhancedChatAssistant: React.FC<ChatAssistantProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [provider, setProvider] = useState<'gemini' | 'groq'>('gemini');
+  const [provider, setProvider] = useState<'gemini' | 'groq'>('groq');
   const [error, setError] = useState<string | null>(null);
   const [embeddingsStatus, setEmbeddingsStatus] = useState<{
     exists: boolean;

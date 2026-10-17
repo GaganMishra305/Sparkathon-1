@@ -6,7 +6,7 @@ exports.analyzeCode = async (req, res) => {
     if (!code) {
       return res.status(400).json({ error: "Code is required" });
     }
-    const analysisReport = await analysisService.analyzeCodeGemini(code, language);
+    const analysisReport = await analysisService.analyzeCode(code, language);
     res.json({ analysis: analysisReport });
   } catch (error) {
     console.error("Error analyzing code:", error);
@@ -44,7 +44,7 @@ exports.getQueryAboutCode = async (req, res) => {
     }, 45000); // 45 second timeout
 
     try {
-      const analysisReport = await analysisService.getQueryAboutCodeGemini(code, question);
+      const analysisReport = await analysisService.getQueryAboutCode(code, question);
       clearTimeout(timeoutId);
       
       if (!res.headersSent) {

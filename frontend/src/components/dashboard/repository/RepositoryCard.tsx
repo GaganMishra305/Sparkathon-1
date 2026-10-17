@@ -105,7 +105,11 @@ export const RepositoryCard = ({ repo }: RepositoryCardProps) => {
 
       {/* Render chat assistant when open */}
       {isChatOpen && (
-        <ChatAssistant repo={repo.name} onClose={() => setIsChatOpen(false)} />
+        <ChatAssistant 
+          owner={typeof repo.owner === 'object' && repo.owner ? (repo.owner as any).login : repo.owner} 
+          repo={repo.name} 
+          onClose={() => setIsChatOpen(false)} 
+        />
       )}
     </>
   );

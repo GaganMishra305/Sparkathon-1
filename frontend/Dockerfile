@@ -18,6 +18,7 @@ RUN npm run build
 
 # Production stage
 FROM nginx:alpine
+RUN apk add --no-cache curl
 
 # Copy custom nginx config
 COPY <<EOF /etc/nginx/conf.d/default.conf
@@ -44,7 +45,7 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://web:8000/;
+        proxy_pass http://fastapi-backend:8000/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -64,12 +65,10 @@ EOF
 # Copy built application
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Create nginx user
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S nginx -u 1001 -G nginx
-
 # Set proper permissions
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid && \
+    chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
     chown -R nginx:nginx /etc/nginx/conf.d

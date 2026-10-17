@@ -17,3 +17,20 @@ node_modules/
 */env/
 */venv/
 
+# OS files
+.DS_Store
+**/.DS_Store
+
+# Log files
+*.log
+**/*.log
+backend/logs/
+fastapi-backend/logs/
+
+# Local databases & RAG indices
+fastapi-backend/data/
+
+# Local scans and outputs
+fastapi-backend/scans/
+
+

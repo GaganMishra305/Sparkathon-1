@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 // Django backend URL - adjust port if needed
-const DJANGO_BASE_URL = process.env.DJANGO_BASE_URL || 'http://localhost:8000';
+const DJANGO_BASE_URL = process.env.DJANGO_BASE_URL || process.env.DJANGO_API_URL || 'http://localhost:8000';
 
 class DjangoScanService {
   constructor() {
